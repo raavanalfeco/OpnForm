@@ -111,8 +111,6 @@ services:
     container_name: opnform-gateway
     volumes:
       - ./docker/nginx.conf:/etc/nginx/templates/default.conf.template
-    ports:
-      - 8081:80
     environment:
       - NGINX_MAX_BODY_SIZE=64m
     depends_on:
