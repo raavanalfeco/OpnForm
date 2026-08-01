@@ -85,4 +85,23 @@ else
   set_env_value "$CLIENT_ENV_FILE" "NUXT_API_SECRET" "$SHARED_SECRET"
 fi
 
+# Coolify's Docker Compose build pack flattens every service's `env_file:
+# ./api/.env` / `./client/.env` down to a single root-level `.env`, so the
+# actual secrets in api/.env and client/.env never reach the containers
+# unless they're also present in the root .env. Merge them in on every run
+# (not just first creation), since Coolify may reuse the root .env across
+# deploys rather than regenerating it. Idempotent: strips any previously
+# merged section before re-appending, so re-runs don't accumulate
+# duplicates. Key names don't collide between the two source files.
+MERGE_MARKER="# --- merged from api/.env and client/.env (see setup-env.sh) ---"
+if [ -f .env ] && grep -qF "$MERGE_MARKER" .env; then
+  sed -i "/$MERGE_MARKER/,\$d" .env
+fi
+{
+  echo ""
+  echo "$MERGE_MARKER"
+  cat "$ENV_FILE"
+  cat "$CLIENT_ENV_FILE"
+} >> .env
+
 echo "✅ OpnForm environment setup is now complete. Enjoy building your forms!"
