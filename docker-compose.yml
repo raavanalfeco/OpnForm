@@ -5,6 +5,22 @@ services:
     container_name: opnform-api
     volumes: &api-environment-volumes
       - opnform_storage:/usr/share/nginx/html/storage:rw
+      # Coolify's Docker Compose build pack flattens env_file paths to a
+      # shared root .env, so ./api/.env's real APP_KEY/JWT_SECRET never
+      # reach the container that way. Bind-mount the actual file (volumes
+      # aren't flattened) and source it in the entrypoint below.
+      - ./api/.env:/run/secrets/api.env:ro
+    # Preserves the image's own opnform-entrypoint (role detection, PHP
+    # config, migrations, etc.) — just sources the real secrets first.
+    # "sh" here is a placeholder for $0; "$@" forwards whatever command
+    # this service (or api-worker/api-scheduler below) actually specifies.
+    entrypoint:
+      [
+        "sh",
+        "-c",
+        "set -a; . /run/secrets/api.env; set +a; exec /usr/local/bin/opnform-entrypoint \"$@\"",
+        "sh",
+      ]
     environment: &api-env
       APP_ENV: production
       # Database settings
