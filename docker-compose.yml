@@ -67,7 +67,7 @@ services:
       start_period: 70s # Allow time for first scheduled run and cache write
 
   ui:
-    image: jhumanj/opnform-client:2.2.2
+    image: jhumanj/opnform-client:1.13.2
     container_name: opnform-client
     environment:
       NODE_OPTIONS: "--max-old-space-size=8192"
