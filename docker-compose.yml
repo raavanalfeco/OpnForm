@@ -69,6 +69,8 @@ services:
   ui:
     image: jhumanj/opnform-client:2.2.2
     container_name: opnform-client
+    environment:
+      NODE_OPTIONS: "--max-old-space-size=8192"
     env_file:
       - ./client/.env
     depends_on:
