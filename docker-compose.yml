@@ -21,6 +21,12 @@ services:
         "set -a; . /run/secrets/api.env; set +a; exec /usr/local/bin/opnform-entrypoint \"$@\"",
         "sh",
       ]
+    # Compose does NOT forward the image's default CMD when entrypoint is
+    # overridden (only the image's own, un-overridden entrypoint does that).
+    # api-worker/api-scheduler already set their own command explicitly
+    # (and override this via merge below); api needs its default made
+    # explicit here since it previously relied on the image's CMD.
+    command: ["php-fpm"]
     environment: &api-env
       APP_ENV: production
       # Database settings
