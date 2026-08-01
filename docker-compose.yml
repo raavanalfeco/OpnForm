@@ -73,6 +73,13 @@ services:
       NODE_OPTIONS: "--max-old-space-size=8192"
     env_file:
       - ./client/.env
+    # Coolify's Docker Compose build pack flattens env_file paths to a
+    # shared root .env, so ./client/.env's real NUXT_* config never reaches
+    # the container that way. Bind-mount the actual file (volumes aren't
+    # flattened) and source it directly before launching the server.
+    volumes:
+      - ./client/.env:/run/secrets/client.env:ro
+    command: ["sh", "-c", "set -a; . /run/secrets/client.env; set +a; exec node ./server/index.mjs"]
     depends_on:
       api:
         condition: service_healthy
