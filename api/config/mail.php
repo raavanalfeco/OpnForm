@@ -81,6 +81,10 @@ return [
         'array' => [
             'transport' => 'array',
         ],
+
+        'resend' => [
+            'transport' => 'resend',
+        ],
     ],
 
     /*
