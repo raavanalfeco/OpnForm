@@ -63,18 +63,39 @@ else
   echo "Creating OpnForm's main .env file from the template..."
   cp "$ENV_EXAMPLE" "$ENV_FILE"
 
-  # Secure your OpnForm instance with a unique APP_KEY
-  APP_KEY=$(generate_base64_key)
-  set_env_value "$ENV_FILE" "APP_KEY" "base64:$APP_KEY"
+  # Use APP_KEY from environment (e.g. Coolify env var) to keep it stable across deploys,
+  # otherwise generate a fresh one. A changing APP_KEY breaks encrypted data (MFA secrets, etc).
+  if [ -n "$APP_KEY" ]; then
+    set_env_value "$ENV_FILE" "APP_KEY" "$APP_KEY"
+  else
+    APP_KEY="base64:$(generate_base64_key)"
+    set_env_value "$ENV_FILE" "APP_KEY" "$APP_KEY"
+  fi
 
-  # Generate a JWT_SECRET to sign your tokens
-  JWT_SECRET=$(generate_secret)
-  set_env_value "$ENV_FILE" "JWT_SECRET" "$JWT_SECRET"
+  # Use JWT_SECRET from environment if available, otherwise generate
+  if [ -n "$JWT_SECRET" ]; then
+    set_env_value "$ENV_FILE" "JWT_SECRET" "$JWT_SECRET"
+  else
+    JWT_SECRET=$(generate_secret)
+    set_env_value "$ENV_FILE" "JWT_SECRET" "$JWT_SECRET"
+  fi
 
-  # Generate a shared secret for the client
-  SHARED_SECRET=$(generate_secret)
+  # Use FRONT_API_SECRET from environment if available, otherwise generate
+  if [ -n "$FRONT_API_SECRET" ]; then
+    SHARED_SECRET="$FRONT_API_SECRET"
+  else
+    SHARED_SECRET=$(generate_secret)
+  fi
   set_env_value "$ENV_FILE" "FRONT_API_SECRET" "$SHARED_SECRET"
 fi
+
+# Apply mail configuration from environment variables if set (e.g. Coolify env vars)
+for VAR in MAIL_MAILER MAIL_HOST MAIL_PORT MAIL_USERNAME MAIL_PASSWORD MAIL_ENCRYPTION MAIL_FROM_ADDRESS MAIL_FROM_NAME; do
+  VAL=$(eval echo \$$VAR)
+  if [ -n "$VAL" ]; then
+    set_env_value "$ENV_FILE" "$VAR" "$VAL"
+  fi
+done
 
 # Check if the client .env file exists
 if [ -f "$CLIENT_ENV_FILE" ]; then
